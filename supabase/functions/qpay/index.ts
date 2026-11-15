@@ -1,4 +1,4 @@
-// ZaluusDrama — QPay төлбөрийн функц
+// Zaluus Drama — QPay төлбөрийн функц
 // POST {action:"create", plan: plans.code, movie_id?}  → нэхэмжлэх + QR
 // POST {action:"check", payment_id}                         → төлөв шалгах
 // GET/POST ?callback=1&payment_id=...                         → QPay-ийн callback
@@ -94,7 +94,7 @@ async function sendCapiPurchase(paymentId: string) {
   if (p.client_ua) ud.client_user_agent = p.client_ua;
   const body = { data: [{
     event_name: "Purchase", event_time: Math.floor(new Date(p.paid_at || Date.now()).getTime() / 1000), event_id: p.id,
-    action_source: "website", event_source_url: "https://zaluusdrama.com/", user_data: ud,
+    action_source: "website", event_source_url: "https://zaluuskino.com/", user_data: ud,
     custom_data: { currency: "MNT", value: Number(p.amount) || 0, content_ids: [p.movie_id ? String(p.movie_id) : p.plan_code], content_type: "product" },
   }] };
   const r = await fetch(`https://graph.facebook.com/v21.0/${pixel}/events?access_token=${encodeURIComponent(token)}`, {
@@ -161,14 +161,14 @@ Deno.serve(async (req: Request) => {
 
       let movieId: number | null = null;
       let amount = plan.amount as number;
-      let description = `ZaluusDrama — ${plan.title}`;
+      let description = `Zaluus Drama — ${plan.title}`;
       if (plan.kind === "rent") {
         movieId = Number(body.movie_id);
         if (!Number.isInteger(movieId)) return json({ error: "Кино сонгоно уу" }, 400);
         const [movie] = await db(`movies?id=eq.${movieId}&published=eq.true&select=id,title,rent_price`);
         if (!movie) return json({ error: "Кино олдсонгүй" }, 404);
         amount = movie.rent_price || amount;
-        description = `ZaluusDrama — ${movie.title} (${plan.hours} цаг)`;
+        description = `Zaluus Drama — ${movie.title} (${plan.hours} цаг)`;
       }
 
       const [payment] = await db("payments", {
