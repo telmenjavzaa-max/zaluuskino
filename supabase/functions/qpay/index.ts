@@ -1,4 +1,4 @@
-// Zaluus Drama — QPay төлбөрийн функц
+// Zaluus Kino — QPay төлбөрийн функц
 // POST {action:"create", plan: plans.code, movie_id?}  → нэхэмжлэх + QR
 // POST {action:"check", payment_id}                         → төлөв шалгах
 // GET/POST ?callback=1&payment_id=...                         → QPay-ийн callback
@@ -161,14 +161,14 @@ Deno.serve(async (req: Request) => {
 
       let movieId: number | null = null;
       let amount = plan.amount as number;
-      let description = `Zaluus Drama — ${plan.title}`;
+      let description = `Zaluus Kino — ${plan.title}`;
       if (plan.kind === "rent") {
         movieId = Number(body.movie_id);
         if (!Number.isInteger(movieId)) return json({ error: "Кино сонгоно уу" }, 400);
         const [movie] = await db(`movies?id=eq.${movieId}&published=eq.true&select=id,title,rent_price`);
         if (!movie) return json({ error: "Кино олдсонгүй" }, 404);
         amount = movie.rent_price || amount;
-        description = `Zaluus Drama — ${movie.title} (${plan.hours} цаг)`;
+        description = `Zaluus Kino — ${movie.title} (${plan.hours} цаг)`;
       }
 
       const [payment] = await db("payments", {
