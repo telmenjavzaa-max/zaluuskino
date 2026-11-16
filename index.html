@@ -591,7 +591,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
   const meta = (m) => [m.year, m.kind === "series" ? (m.ep_count ? `${m.ep_count} анги` : "Цуврал") : (m.runtime ? dur(m.runtime) : "")].filter(Boolean).join(" · ");
   const playIc = '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>';
   function posterHTML(m, withBadges = true, priority = false) {
-    const badge = !withBadges ? "" : !m.has_video ? `<span class="badge soon">Удахгүй</span>` : isNew(m) ? `<span class="badge">Шинэ</span>` : "";
+    const badge = !withBadges ? "" : !m.has_video ? `<span class="badge soon">Тун удахгүй</span>` : isNew(m) ? `<span class="badge">Шинэ</span>` : "";
     return `<div class="poster${is18(m) && !ageConfirmed() ? " locked" : ""}" style="--h1:${+m.hue1 || 340};--h2:${+m.hue2 || 260}">
       ${is18(m) ? `<span class="badge adult">18+</span>` : ""}
       <div class="p-title">${esc(m.title)}</div>
@@ -770,7 +770,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
     const firstEp = eps[0];
     const resumeAt = pr && pr.position_sec > 20 ? pr.position_sec : 0;
     let mainBtn = "";
-    if (!m.has_video) mainBtn = `<button class="btn primary" disabled>Удахгүй нэмэгдэнэ</button>`;
+    if (!m.has_video) mainBtn = `<button class="btn primary" disabled>Тун удахгүй</button>`;
     else if (m.kind === "series") {
       const ep = curEp || firstEp;
       if (ep) mainBtn = `<button class="btn primary" data-playep="${ep.id}">${playIc.replace("<svg", '<svg fill="currentColor"')} ${curEp ? "Үргэлжлүүлэх" : "Үзэх"} · ${ep.season > 1 ? ep.season + "-р улирал, " : ""}${ep.number}-р анги</button>`;
