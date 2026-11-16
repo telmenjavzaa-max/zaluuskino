@@ -106,6 +106,12 @@ nav.mob { display: none; }
 .btn:hover { border-color: #ffffff33; }
 .btn.primary { background: linear-gradient(180deg, var(--red), var(--red-2)); color: var(--red-ink); border-color: transparent; box-shadow: 0 10px 24px -10px #ff2d55aa; }
 .btn.primary:hover { filter: brightness(1.08); }
+.btn.sms { display: grid; gap: 2px; justify-items: center; padding: 12px 14px; background: #ffd34d1f; color: #ffd34d; border: 2px solid #ffd34d; font-weight: 800; animation: smsPulse 2s ease-in-out infinite; }
+.btn.sms .sms-main { font-size: 15px; }
+.btn.sms .sms-sub { font-size: 12px; font-weight: 600; color: #ffe9a8; opacity: .9; }
+.btn.sms:hover { background: #ffd34d33; }
+@keyframes smsPulse { 0%, 100% { box-shadow: 0 0 0 0 #ffd34d55; } 50% { box-shadow: 0 0 0 6px #ffd34d00; } }
+@media (prefers-reduced-motion: reduce) { .btn.sms { animation: none; } }
 .btn.glass { background: #ffffff14; border-color: #ffffff2a; backdrop-filter: blur(8px); }
 .btn.ghost { background: transparent; }
 .btn.wide { width: 100%; }
@@ -477,7 +483,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
         </label>
         <div style="height:10px"></div>
         <button class="btn primary wide" type="submit" id="pinLoginBtn">Нэвтрэх</button>
-        <button class="btn ghost wide" type="button" id="sendCodeBtn" style="margin-top:8px">Анх удаа эсвэл PIN мартсан бол → SMS код авах</button>
+        <button class="btn sms wide" type="button" id="sendCodeBtn" style="margin-top:10px"><span class="sms-main">📩 Анх удаа бол энд дарж SMS код аваарай</span><span class="sms-sub">PIN кодоо мартсан бол мөн энд дарна</span></button>
       </form>
       <form id="codeForm" novalidate hidden>
         <label for="code">SMS-ээр ирсэн 6 оронтой код
