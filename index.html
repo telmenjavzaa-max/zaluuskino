@@ -641,8 +641,10 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
   }
 
   // ---------- Харуулах ----------
-  const byNew = (a, b) => new Date(b.created_at) - new Date(a.created_at) || b.id - a.id;
-  const byTop = (a, b) => (b.views || 0) - (a.views || 0) || byNew(a, b);
+  // Үзэх боломжтой кино эхэнд, "Тун удахгүй" нь ард
+  const ready = (a, b) => (b.has_video === true) - (a.has_video === true);
+  const byNew = (a, b) => ready(a, b) || new Date(b.created_at) - new Date(a.created_at) || b.id - a.id;
+  const byTop = (a, b) => ready(a, b) || (b.views || 0) - (a.views || 0) || new Date(b.created_at) - new Date(a.created_at) || b.id - a.id;
   const BRAND_IMG = cfg.BRAND_HERO || "";
   function heroItems() {
     return (BRAND_IMG ? [{ id: "brand", brand: true, poster_url: BRAND_IMG }] : []).concat([...state.movies].filter((m) => (m.backdrop_url || m.poster_url) && !is18(m)).sort((a, b) => (b.featured === true) - (a.featured === true) || byNew(a, b)).slice(0, 6));
@@ -723,7 +725,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
       matchCat(m, state.cat) &&
       (!q || [m.title, m.genre, ...(m.tags || []), m.description].some((v) => norm(v).includes(q))));
     const sort = state.view === "top" ? "top" : state.view === "new" ? "new" : state.sort;
-    return list.sort({ new: byNew, top: byTop, title: (a, b) => a.title.localeCompare(b.title, "mn") }[sort] || byNew);
+    return list.sort({ new: byNew, top: byTop, title: (a, b) => ready(a, b) || a.title.localeCompare(b.title, "mn") }[sort] || byNew);
   }
   function renderBrowse() {
     const catLabel = CATS.find((c) => c.key === state.cat && !["all"].includes(c.key))?.label;
