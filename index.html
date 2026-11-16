@@ -893,7 +893,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
       if (ep) return playEpisode(ep.id, id);
       return openMovie(id);
     }
-    if (!state.user) { state.pendingPlay = { id }; openAuth("Кино үзэхийн тулд нэвтэрнэ үү."); return; }
+    if (!state.user) { state.pendingPlay = { id }; savePending(); openPaywall(m); return; }
     const { data } = await sb.from("movie_videos").select("video_url").eq("movie_id", id).maybeSingle();
     if (!data?.video_url) return openPaywall(m);
     sb.rpc("record_view", { p_movie: id });
@@ -965,7 +965,6 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
   }
   function openSubPaywall() {
     $("#menu").hidden = true;
-    if (PAY && !state.user) { openAuth("Багц авахын тулд эхлээд нэвтэрнэ үү."); return; }
     stopPolling();
     $("#payBody").innerHTML = `<h2 id="pTitle">Багц сонгох</h2><p class="note">Бүх кино, цувралыг хязгааргүй үзнэ.</p>${soonNote}
       ${subPlans().map((p) => planBtn(p, null)).join("") || `<p class="note">Одоогоор идэвхтэй багц алга.</p>`}<div class="msg" id="payMsg" role="status"></div>`;
@@ -973,6 +972,7 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
   }
   async function buy(plan, movieId) {
     if (!PAY) return;
+    if (!state.user) { state.pendingBuy = { plan, movieId: movieId || null }; savePending(); $("#payDlg").close(); openAuth("Төлбөрөө төлөхийн тулд 1 минутад нэвтэрнэ үү (Google эсвэл утас)."); return; }
     const msg = $("#payMsg"); msg.className = "msg"; msg.textContent = "Нэхэмжлэх үүсгэж байна…";
     document.querySelectorAll("[data-buy]").forEach((b) => (b.disabled = true));
     const pl = state.plans[plan] || {};
@@ -1079,7 +1079,19 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
     render();
     if (user && !state.pinSetting) runPending();
   }
-  function runPending() { if (!state.user || !state.pendingPlay) return; const p = state.pendingPlay; state.pendingPlay = null; p.ep ? playEpisode(p.ep, p.id) : play(p.id); }
+  // Google нэвтрэлт хуудсаа шилжүүлдэг тул хүлээгдэж буй үйлдлийг табд хадгална
+  function savePending() { try { sessionStorage.setItem("kz.pending", JSON.stringify({ buy: state.pendingBuy || null, play: state.pendingPlay || null, t: Date.now() })); } catch {} }
+  function restorePending() { try { const p = JSON.parse(sessionStorage.getItem("kz.pending") || "null"); sessionStorage.removeItem("kz.pending"); if (p && Date.now() - p.t < 30 * 60 * 1000) { state.pendingBuy = state.pendingBuy || p.buy; state.pendingPlay = state.pendingPlay || p.play; } } catch {} }
+  function runPending() {
+    if (state.user) { try { sessionStorage.removeItem("kz.pending"); } catch {} }
+    if (state.user && state.pendingBuy) {
+      const b = state.pendingBuy; state.pendingBuy = null;
+      const mv = b.movieId ? state.movies.find((x) => x.id === b.movieId) : null;
+      if (mv && hasAccess(mv.id)) { state.pendingPlay = null; play(mv.id); return; }
+      if (!mv && state.ents.some((e) => e.movie_id == null && new Date(e.expires_at).getTime() > Date.now())) { if (state.pendingPlay) { const p = state.pendingPlay; state.pendingPlay = null; play(p.id); } return; }
+      mv ? openPaywall(mv) : openSubPaywall(); buy(b.plan, b.movieId); return;
+    }
+    if (!state.user || !state.pendingPlay) return; const p = state.pendingPlay; state.pendingPlay = null; p.ep ? playEpisode(p.ep, p.id) : play(p.id); }
 
   // ---------- Үйлдлүүд ----------
   document.addEventListener("click", (e) => {
@@ -1144,8 +1156,11 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
     if (!sb) { hideSplash(); return; }
     [state.movies] = await Promise.all([loadMovies(), loadPlans()]);
     const { data } = await sb.auth.getSession();
+    restorePending();
     await onUser(data.session?.user || null);
     hideSplash();
+    const dl = +(new URLSearchParams(location.search).get("m") || (location.hash.match(/m=(\d+)/) || [])[1] || 0);
+    if (dl && state.movies.some((x) => x.id === dl)) { track("ViewContent", { content_ids: [String(dl)], content_type: "product" }); openMovie(dl); }
     sb.auth.onAuthStateChange((_e, s) => { if ((s?.user?.id || null) !== (state.user?.id || null)) onUser(s?.user || null); });
   })();
 })();
