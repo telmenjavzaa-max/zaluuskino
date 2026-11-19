@@ -1178,6 +1178,15 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
     hideSplash();
     const dl = +(new URLSearchParams(location.search).get("m") || (location.hash.match(/m=(\d+)/) || [])[1] || 0);
     if (dl && state.movies.some((x) => x.id === dl)) { track("ViewContent", { content_ids: [String(dl)], content_type: "product" }); openMovie(dl); }
+    // Сайтад ороход 4 секундын дараа үнийн багцыг автоматаар харуулна (табд 1 удаа; эрхтэй хүнд, кино шууд нээсэн үед харуулахгүй)
+    setTimeout(() => {
+      try { if (sessionStorage.getItem("plansShown")) return; } catch {}
+      const busy = [...document.querySelectorAll("dialog")].some((d) => d.open);
+      const hasSub = state.ents.some((e) => e.movie_id == null && new Date(e.expires_at).getTime() > Date.now());
+      if (busy || hasSub || dl || !PAY || !subPlans().length) return;
+      try { sessionStorage.setItem("plansShown", "1"); } catch {}
+      openSubPaywall();
+    }, 4000);
     sb.auth.onAuthStateChange((_e, s) => { if ((s?.user?.id || null) !== (state.user?.id || null)) onUser(s?.user || null); });
   })();
 })();
