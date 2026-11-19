@@ -602,14 +602,14 @@ dialog::backdrop { background: #000c; }
         const ext = (state.backFile.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
         const path = `backdrops/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const { error: upErr } = await sb.storage.from("posters").upload(path, state.backFile, { cacheControl: "31536000", contentType: state.backFile.type });
-        if (upErr) throw new Error("Өргөн зураг оруулж чадсангүй: " + upErr.message);
+        if (upErr) throw new Error(/row-level security/i.test(upErr.message) ? "Өргөн зураг оруулж чадсангүй: админ эрхээр нэвтрээгүй байна. Хуудсаа дахин ачаалаад нэвтэрнэ үү." : "Өргөн зураг оруулж чадсангүй: " + upErr.message);
         row.backdrop_url = sb.storage.from("posters").getPublicUrl(path).data.publicUrl;
       }
       if (state.posterFile) {
         const ext = (state.posterFile.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
         const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const { error: upErr } = await sb.storage.from("posters").upload(path, state.posterFile, { cacheControl: "31536000", contentType: state.posterFile.type });
-        if (upErr) throw new Error("Постер оруулж чадсангүй: " + upErr.message);
+        if (upErr) throw new Error(/row-level security/i.test(upErr.message) ? "Постер оруулж чадсангүй: админ эрхээр нэвтрээгүй байна (өөр табд гарсан байж магадгүй). Хуудсаа дахин ачаалаад нэвтэрнэ үү." : "Постер оруулж чадсангүй: " + upErr.message);
         row.poster_url = sb.storage.from("posters").getPublicUrl(path).data.publicUrl;
       }
       let id = state.editing?.id;
@@ -890,7 +890,7 @@ dialog::backdrop { background: #000c; }
       </tr>`).join("") : `<tr><td colspan="6" class="empty">Одоогоор төлбөр алга.</td></tr>`;
   }
 
-  sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" || ev === "SIGNED_OUT") start(); });
+  sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT") { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); toast("Нэвтрэлт гарсан байна (өөр табд гарсан байж магадгүй). Дахин нэвтэрнэ үү."); } if (ev === "SIGNED_IN" || ev === "SIGNED_OUT") start(); });
   start();
 })();
 </script>
