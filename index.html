@@ -205,6 +205,20 @@ main { padding-bottom: 56px; }
 dialog { border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); border-radius: 18px; padding: 0; width: min(900px, calc(100vw - 24px)); max-height: calc(100vh - 32px); }
 dialog::backdrop { background: #000c; backdrop-filter: blur(4px); }
 #authDlg, #payDlg, #promoDlg { width: min(440px, calc(100vw - 32px)); }
+
+/* Сайтад ороход гарах санал цонх (Кино Танхимынхтай ижил загвар) */
+#promoDlg { border-color: #ffc24b; }
+.promo-top { position: relative; height: 150px; overflow: hidden; background: radial-gradient(120% 90% at 50% 110%, #ffc24b55, transparent 60%), linear-gradient(180deg, #2a1418, var(--surface)); display: grid; place-items: center; }
+.promo-top .reel { display: flex; gap: 10px; transform: rotate(-6deg); }
+.promo-top .reel img, .promo-top .reel i { width: 72px; aspect-ratio: 1 / 1.414; border-radius: 8px; object-fit: cover; box-shadow: 0 10px 24px -8px #000; display: block; background: var(--surface-2); }
+.promo-top .reel :nth-child(2) { translate: 0 -12px; scale: 1.08; }
+.promo-body { padding: 18px 24px 24px; display: grid; gap: 12px; }
+.promo-body h2 { font-family: var(--title); font-size: 22px; line-height: 1.2; margin: 0; color: #ffc24b; text-wrap: balance; }
+.promo-list { display: grid; }
+.promo-list div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 14px; }
+.promo-list div:last-child { border-bottom: 0; }
+.promo-list b { color: #ffc24b; font-variant-numeric: tabular-nums; }
+.promo-list s { color: var(--muted); font-weight: 600; font-size: 12px; margin-right: 6px; }
 .close-x { position: absolute; top: 12px; right: 12px; z-index: 5; border: 0; background: #000a; width: 36px; height: 36px; border-radius: 50%; font-size: 19px; color: #fff; }
 .d-hero { position: relative; min-height: 220px; background: var(--surface) center 25% / cover no-repeat; }
 .d-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg-2) 0%, #0b091299 45%, #0b091233 100%); }
@@ -519,6 +533,17 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
     </div>
     <div class="msg" id="authMsg" role="status"></div>
     <button class="btn ghost" type="button" data-close>Болих</button>
+  </div>
+</dialog>
+
+<dialog id="promoDlg" aria-labelledby="promoTitle">
+  <button class="close-x" data-close aria-label="Хаах">×</button>
+  <div class="promo-top" id="promoArt"></div>
+  <div class="promo-body">
+    <h2 id="promoTitle">Бүх кино нэг эрхээр</h2>
+    <p class="note">Сайт дээрх бүх киног хязгааргүй үзнэ. QPay-ээр 1 минутад идэвхжинэ.</p>
+    <div class="promo-list" id="promoList"></div>
+    <button class="btn primary wide" id="promoBuy">Эрх авах</button>
   </div>
 </dialog>
 
@@ -1185,8 +1210,14 @@ footer .fine { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-t
       const hasSub = state.ents.some((e) => e.movie_id == null && new Date(e.expires_at).getTime() > Date.now());
       if (busy || hasSub || dl || !PAY || !subPlans().length) return;
       try { sessionStorage.setItem("plansShown", "1"); } catch {}
-      openSubPaywall();
+      const rent = rentPlan();
+      const pics = state.movies.filter((m) => m.poster_url && m.has_video).slice(0, 3);
+      $("#promoArt").innerHTML = `<div class="reel">${pics.map((m) => `<img src="${esc(m.poster_url)}" alt="">`).join("") || "<i></i><i></i><i></i>"}</div>`;
+      $("#promoList").innerHTML = [...subPlans()].sort((a, b) => b.hours - a.hours).map((p) => `<div><span>${esc(p.title)}</span><span>${p.old_amount ? `<s>${fmt(p.old_amount)}</s>` : ""}<b>${fmt(p.amount)}</b></span></div>`).join("")
+        + (rent ? `<div><span>Нэг кино · ${rent.hours} цаг</span><b>${fmt(rent.amount)}-с</b></div>` : "");
+      $("#promoDlg").showModal();
     }, 4000);
+    $("#promoBuy").addEventListener("click", () => { $("#promoDlg").close(); openSubPaywall(); });
     sb.auth.onAuthStateChange((_e, s) => { if ((s?.user?.id || null) !== (state.user?.id || null)) onUser(s?.user || null); });
   })();
 })();
